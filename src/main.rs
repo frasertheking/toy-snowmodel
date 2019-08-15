@@ -1,56 +1,39 @@
 
-// ####################################################################
-// ####################################################################
-// ####################################################################
-// ######                                                        ######
-// ######       Script to illustrate simulator weighting         ######
-// ######       and implications of hierarchical framework.      ######
-// ######                                                        ######
-// ######       This is an R script: R is freely available       ######
-// ######       from www.R-project.org. To run the script,       ######
-// ######       start up R, set the current working directory    ######
-// ######       to that containing the script, and type          ######
-// ######                                                        ######
-// ######       source("ToyExample.r")                           ######
-// ######                                                        ######
-// ######       at the prompt. Alternatively, copy and           ######
-// ######       paste the commands at the prompt one at          ######
-// ######       a time (Windows users can use Ctrl-R to          ######
-// ######       do this, in place of Ctrl-C - Ctrl-V)            ######
-// ######                                                        ######
-// ######                               Richard Chandler         ######
-// ######                                 3rd October 2012       ######
-// ######                                                        ######
-// ####################################################################
-// ####################################################################
-// ####################################################################
-// #
-// #	Start by generating the artificial data set presented in 
-// #       Figure 1 of the paper. Specifying the random number seed
-// #       ensures that the results are reproducible. Note that the 
-// #       mimics used in the paper have the correct structure for 
-// #       the observations and for GCM2, but not for GCM1
-// #
-
+///////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+//////                                                        //////
+//////       Script to run simple snow model with both        //////
+//////       a physical-based approach and temperature        //////
+//////       index approach.                                  //////
+//////                                                        //////
+//////       This is a rust script: rust is freely 			  //////
+//////       available from https://www.rust-lang.org.        //////
+//////       To run the script, cd into the debug             //////
+//////       directory of this project and type               //////
+//////                                                        //////
+//////       $ cargo build                                    //////
+//////       $ ./model                                        //////
+//////                                                        //////
+//////       at the prompt. Your model output will be         //////
+//////	     saved in a .csv file in the same directory       //////
+//////                                                        //////
+//////                               Fraser King              //////
+//////                                 August 15, 2019        //////
+//////                                                        //////
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+//
+// main.rs
+//
 
 extern crate gnuplot;
 extern crate csv;
-
 use std::error::Error;
 use csv::Writer;
-use gnuplot::*;
-// use std::fmt;
 
-// struct Array<T> {
-//     data: [T; 50]
-// }
-
-// impl<T: fmt::Debug> fmt::Debug for Array<T> {
-//     fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-//         self.data[..].fmt(formatter)
-//     }
-// }
-
+// Model Properties
 struct ModelRun {
 	net_solar_rad: f64,
 	vapor_pressure: f64,
@@ -76,28 +59,7 @@ struct ModelRun {
     ti_total_water_output: f64,
 }
 
-// Main runloop
-fn main() {
-
-	// Model Run
-	let mut total_water_arr: [f64; 50] = [-1.0; 50];
-	let mut total_abl_arr: [f64; 50] = [-1.0; 50];
-	let mut total_melt_arr: [f64; 50] = [-1.0; 50];
-	let mut ti_total_abl_arr: [f64; 50] = [-1.0; 50];
-	let mut ti_total_melt_arr: [f64; 50] = [-1.0; 50];
-	let mut temperatures: [f64; 50] = [-1.0; 50];
-	for x in (0..50).rev() {
-		temperatures[x] = x as f64;
-		total_water_arr[x] = run_model(x as f64, false).total_water_output;
-		total_abl_arr[x] = run_model(x as f64, false).total_ablation;
-		total_melt_arr[x] = run_model(x as f64, false).total_melt;
-		ti_total_abl_arr[x] = run_model(x as f64, false).ti_total_melt;
-		ti_total_melt_arr[x] = run_model(x as f64, false).ti_total_water_output;
-	}
-
-	saveToDisk(temperatures, total_water_arr, total_abl_arr, total_melt_arr, ti_total_abl_arr, ti_total_melt_arr);
-}
-
+// Saving helper function
 fn saveToDisk(temperatures: [f64; 50],
 			  total_water_arr: [f64; 50],
 			  total_abl_arr: [f64; 50],
@@ -115,6 +77,7 @@ fn saveToDisk(temperatures: [f64; 50],
     Ok(())
 }
 
+// Run model
 fn run_model(air_temperature: f64, model_diog: bool) -> ModelRun {
 	// Print text to the console
 	if model_diog {
@@ -122,7 +85,7 @@ fn run_model(air_temperature: f64, model_diog: bool) -> ModelRun {
     }
 
 	// Site variables
-	let measurement_height: f64 = 2.0;       // meters
+	let measurement_height: f64 = 5.0;       // meters
 	let roughness_height: f64 = 0.0015;      // meters
 	let forest_cover_fraction: f64 = 0.8;
 	let albedo: f64 = 0.55;
@@ -133,7 +96,7 @@ fn run_model(air_temperature: f64, model_diog: bool) -> ModelRun {
 	let cloud_cover_fraction: f64 = 0.5;
 	let relative_humidity: f64 = 0.8;        // Wa
 	let wind_speed: f64 = 6.0;               // m/s
-	let rain_rate: f64 = 25.0;               // mm/day
+	let rain_rate: f64 = 0.0;               // mm/day
 	let atmospheric_pressure: f64 = 101.3;   // kPa
 
     let net_solar_rad: f64 = calc_net_solar_rad(clear_sky_solar_rad, cloud_cover_fraction, forest_cover_fraction, albedo);
@@ -204,6 +167,8 @@ fn run_model(air_temperature: f64, model_diog: bool) -> ModelRun {
     return model_run;
 }
 
+
+
 //////////////////////////////////////////////
 // ENERGY BALANCE FNS:
 
@@ -231,6 +196,8 @@ fn calc_water_output(le: f64, total_melt: f64, r: f64, condensation: f64) -> f64
 	}
 }
 
+
+
 //////////////////////////////////////////////
 // TEMPERATURE INDEX FNS:
 
@@ -247,9 +214,9 @@ fn calc_ti_total_water_output(ti_total_melt: f64, r: f64) -> f64 {
 }
 
 
+
 //////////////////////////////////////////////
 // ENERGY BALANCE HELPER FNS:
-
 
 fn calc_net_solar_rad(kcs: f64, c: f64, f: f64, a: f64) -> f64 {
 	return kcs*(0.355 + 0.68*(1.0-c))*(-3.91*f).exp()*(1.0-a);
@@ -317,6 +284,31 @@ fn calc_rain_heat(r: f64, ta: f64) -> f64 {
 
 fn calc_total_heat_input_rate(net_rad: f64, h: f64, le: f64, r: f64) -> f64 {
 	return net_rad + h + le + r;
+}
+
+
+
+//////////////////////////////////////////////
+// MAIN RUNLOOP:
+fn main() {
+
+	// Model Run
+	let mut total_water_arr: [f64; 50] = [-1.0; 50];
+	let mut total_abl_arr: [f64; 50] = [-1.0; 50];
+	let mut total_melt_arr: [f64; 50] = [-1.0; 50];
+	let mut ti_total_abl_arr: [f64; 50] = [-1.0; 50];
+	let mut ti_total_melt_arr: [f64; 50] = [-1.0; 50];
+	let mut temperatures: [f64; 50] = [-1.0; 50];
+	for x in (0..50).rev() {
+		temperatures[x] = x as f64;
+		total_water_arr[x] = run_model(x as f64, false).total_water_output;
+		total_abl_arr[x] = run_model(x as f64, false).total_ablation;
+		total_melt_arr[x] = run_model(x as f64, false).total_melt;
+		ti_total_abl_arr[x] = run_model(x as f64, false).ti_total_melt;
+		ti_total_melt_arr[x] = run_model(x as f64, false).ti_total_water_output;
+	}
+
+	saveToDisk(temperatures, total_water_arr, total_abl_arr, total_melt_arr, ti_total_abl_arr, ti_total_melt_arr);
 }
 
 
