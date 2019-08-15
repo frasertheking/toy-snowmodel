@@ -1,4 +1,38 @@
 
+// ####################################################################
+// ####################################################################
+// ####################################################################
+// ######                                                        ######
+// ######       Script to illustrate simulator weighting         ######
+// ######       and implications of hierarchical framework.      ######
+// ######                                                        ######
+// ######       This is an R script: R is freely available       ######
+// ######       from www.R-project.org. To run the script,       ######
+// ######       start up R, set the current working directory    ######
+// ######       to that containing the script, and type          ######
+// ######                                                        ######
+// ######       source("ToyExample.r")                           ######
+// ######                                                        ######
+// ######       at the prompt. Alternatively, copy and           ######
+// ######       paste the commands at the prompt one at          ######
+// ######       a time (Windows users can use Ctrl-R to          ######
+// ######       do this, in place of Ctrl-C - Ctrl-V)            ######
+// ######                                                        ######
+// ######                               Richard Chandler         ######
+// ######                                 3rd October 2012       ######
+// ######                                                        ######
+// ####################################################################
+// ####################################################################
+// ####################################################################
+// #
+// #	Start by generating the artificial data set presented in 
+// #       Figure 1 of the paper. Specifying the random number seed
+// #       ensures that the results are reproducible. Note that the 
+// #       mimics used in the paper have the correct structure for 
+// #       the observations and for GCM2, but not for GCM1
+// #
+
+
 extern crate gnuplot;
 extern crate csv;
 
@@ -45,48 +79,20 @@ struct ModelRun {
 
 fn main() {
 
-    let mut outputs: [f64; 50] = [-1.0; 50];
-    let mut outputs2: [f64; 50] = [-1.0; 50];
-    let mut outputs3: [f64; 50] = [-1.0; 50];
-    let mut temps: [f64; 50] = [-1.0; 50];
-    for x in (0..50).rev() {
-    	temps[x] = x as f64;
-    	outputs[x] = run_model(x as f64, false).total_water_output;
-    	outputs2[x] = run_model(x as f64, false).total_ablation;
-    	outputs3[x] = run_model(x as f64, false).total_melt;
-	}
+	run_model(4.0, true);
 
-	example(outputs, outputs2, outputs3);
+ //    let mut outputs: [f64; 50] = [-1.0; 50];
+ //    let mut outputs2: [f64; 50] = [-1.0; 50];
+ //    let mut outputs3: [f64; 50] = [-1.0; 50];
+ //    let mut temps: [f64; 50] = [-1.0; 50];
+ //    for x in (0..50).rev() {
+ //    	temps[x] = x as f64;
+ //    	outputs[x] = run_model(x as f64, false).total_water_output;
+ //    	outputs2[x] = run_model(x as f64, false).total_ablation;
+ //    	outputs3[x] = run_model(x as f64, false).total_melt;
+	// }
 
-	// let array = Array { data: outputs };
-	// println!("{:?}", array);
-
- //    let mut fg = Figure::new();
-	// fg.axes2d()
-	// 	.set_title("A plot", &[])
-	// 	.set_legend(Graph(0.5), Graph(0.9), &[], &[])
-	// 	.set_x_label("x", &[])
-	// 	.set_y_label("y^2", &[])
-	// 	.lines(
-	// 		&temps[0 .. 50],
-	// 		&outputs[0 .. 50],
-	// 		&[Caption("12341234234")],
-	// 	);
-	// fg.axes2d()
-	// 	.set_legend(Graph(0.5), Graph(0.9), &[], &[])
-	// 	.lines(
-	// 		&temps[0 .. 50],
-	// 		&outputs2[0 .. 50],
-	// 		&[Caption("asdasdasdas")],
-	// 	);
-	// fg.axes2d()
-	// 	.set_legend(Graph(0.5), Graph(0.9), &[], &[])
-	// 	.lines(
-	// 		&temps[0 .. 50],
-	// 		&outputs3[0 .. 50],
-	// 		&[Caption("gfdgdsfgsdf")],
-	// 	);
-	// fg.show();
+	// example(outputs, outputs2, outputs3);
 }
 
 fn example(arr1: [f64; 50], arr2: [f64; 50], arr3: [f64; 50]) -> Result<(), Box<Error>> {
@@ -116,23 +122,23 @@ fn run_model(air_temperature: f64, model_diog: bool) -> ModelRun {
 	let cloud_cover_fraction: f64 = 0.5;
 	let relative_humidity: f64 = 0.8;        // Wa
 	let wind_speed: f64 = 6.0;               // m/s
-	let rain_rate: f64 = 10.0;               // mm/day
+	let rain_rate: f64 = 25.0;               // mm/day
 	let atmospheric_pressure: f64 = 101.3;   // kPa
 
     let net_solar_rad: f64 = calc_net_solar_rad(clear_sky_solar_rad, cloud_cover_fraction, forest_cover_fraction, albedo);
     let vapor_pressure: f64 = calc_vap_pressure(air_temperature, relative_humidity);
-    let atmos_emissivity: f64 = calc_atmos_emissivity(forest_cover_fraction, vapor_pressure, air_temperature, cloud_cover_fraction);
+    let atmos_emissivity: f64 = calc_atmos_emissivity(forest_cover_fraction, vapor_pressure, cloud_cover_fraction);
     let net_long_wave_rad: f64 = calc_net_long_rad(atmos_emissivity, air_temperature);
     let net_rad: f64 = net_solar_rad + net_long_wave_rad;
     let adjusted_wind_speed: f64 = calc_adj_wind_speed(wind_speed, forest_cover_fraction);
     let air_density: f64 = calc_air_density(atmospheric_pressure, air_temperature);
-    let richardson_num: f64 = calc_richardson_num(measurement_height, roughness_height, air_temperature, adjusted_wind_speed);
-    let stability_factor_m: f64 = calc_stability_factor_m(richardson_num);
+    let richardson_num: f64 = calc_richardson_num(air_temperature, adjusted_wind_speed);
+    let stability_factor_m: f64 = calc_stability_factor_m(measurement_height, roughness_height);
     let stability_factors_v_h: f64 = calc_stability_factors_v_h(richardson_num, stability_factor_m);
     let sensible_heat_xfer_co: f64 = calc_sensible_heat_xfer_co(air_density, measurement_height, roughness_height);
     let latent_heat_xfer_co: f64 = calc_latent_heat_xfer_co(air_density, atmospheric_pressure, measurement_height, roughness_height);
-    let sensible_xfer_rate: f64 = calc_sensible_heat_xfer_rate(sensible_heat_xfer_co, adjusted_wind_speed, air_temperature, stability_factor_m, stability_factors_v_h);
-    let latent_xfer_rate: f64 = calc_latent_heat_xfer_rate(latent_heat_xfer_co, adjusted_wind_speed, vapor_pressure, stability_factor_m, stability_factors_v_h);
+    let sensible_xfer_rate: f64 = calc_sensible_heat_xfer_rate(stability_factors_v_h, sensible_heat_xfer_co, adjusted_wind_speed, air_temperature);
+    let latent_xfer_rate: f64 = calc_latent_heat_xfer_rate(stability_factors_v_h, latent_heat_xfer_co, adjusted_wind_speed, vapor_pressure);
     let condensation: f64 = calc_condensation(latent_xfer_rate);
     let rain_heat: f64 = calc_rain_heat(rain_rate, air_temperature);
     let total_heat_input_rate: f64 = calc_total_heat_input_rate(net_rad, sensible_xfer_rate, latent_xfer_rate, rain_heat);
@@ -242,12 +248,12 @@ fn calc_vap_pressure(ta: f64, wa: f64) -> f64 {
 	return 0.611*(17.3*ta/(ta+237.3)).exp()*wa;
 }
 
-fn calc_atmos_emissivity(f: f64, ea: f64, ta: f64, c: f64) -> f64 {
-	return (1.0-f)*1.72*(f64::powf(ea/(ta+273.2), 1.0/7.0))*(1.0+0.22*(f64::powf(c, 2.0))) + f;
+fn calc_atmos_emissivity(f: f64, ea: f64, c: f64) -> f64 {
+	return (1.0-f)*((1.0-0.84*c)*(0.83-0.18*(-1.54*ea).exp())+0.84*c)+f
 }
 
 fn calc_net_long_rad(est: f64, ta: f64) -> f64 {
-	return est*0.0000000049*f64::powf(ta+273.2, 4.0) - 27.3;
+	return est*0.0000000049*f64::powf(ta+273.2, 4.0) - 0.0000000049*f64::powf(273.2, 4.0);
 }
 
 fn calc_adj_wind_speed(vao: f64, f: f64) -> f64 {
@@ -258,40 +264,36 @@ fn calc_air_density(p: f64, ta: f64) -> f64 {
 	return p/(0.288*(ta+273.2));
 }
 
-fn calc_richardson_num(za: f64, zo: f64, ta: f64, va: f64) -> f64 {
-	return (2.0*9.81*(za-zo)*ta)/((ta+2.0*273.2)*f64::powf(va, 2.0));
+fn calc_richardson_num(ta: f64, va: f64) -> f64 {
+	return (f64::powf(2.0, 2.0)*9.81*ta)/(0.5*(ta+2.0*273.2)*f64::powf(va, 2.0));
 }
 
-fn calc_stability_factor_m(rj: f64) -> f64 {
-	if rj > 0.0 {
-		return 1.0 / (1.0-5.2*rj);
-	} else {
-		return 1.0 / f64::powf(1.0-18.0*rj, 0.25);
-	}
+fn calc_stability_factor_m(za: f64, zo: f64) -> f64 {
+	return 1.0 / ((za/zo).ln()+5.0);
 }
 
 fn calc_stability_factors_v_h(rj: f64, m: f64) -> f64 {
-	if rj < -0.03 {
-		return 1.3*m;
+	if rj < m {
+		return f64::powf(1.0-rj/0.2, 2.0);
 	} else {
-		return m;
+		return f64::powf(1.0-m/0.2, 2.0);
 	}
 }
 
 fn calc_sensible_heat_xfer_co(pa: f64, za: f64, zo: f64) -> f64 {
-	return 0.001005*pa*0.16/(f64::powf((za/zo).ln(), 2.0))*86400.0;
+	return (0.622*f64::powf(0.4, 2.0)*pa*0.001005/(f64::powf((za/zo).ln(), 2.0)))*86400.0;
 }
 
 fn calc_latent_heat_xfer_co(pa: f64, p: f64, za: f64, zo: f64) -> f64 {
-	return 2.47*0.622*pa/p*0.16/f64::powf((za/zo).ln(), 2.0)*86400.0;
+	return (0.622*pa*2.47*f64::powf(0.4, 2.0)/(p*f64::powf((za/zo).ln(), 2.0)))*86400.0;
 }
 
-fn calc_sensible_heat_xfer_rate(kh: f64, va: f64, ta: f64, m: f64, vh: f64) -> f64 {
-	return kh*va*ta/(m*vh);
+fn calc_sensible_heat_xfer_rate(vh: f64, kh: f64, uaf: f64, ta: f64) -> f64 {
+	return vh*kh*uaf*ta;
 }
 
-fn calc_latent_heat_xfer_rate(kle: f64, va: f64, ea: f64, m: f64, vh: f64) -> f64 {
-	return kle*va*(ea-0.611)/(m*vh);
+fn calc_latent_heat_xfer_rate(vh: f64, kle: f64, uaf: f64, ea: f64) -> f64 {
+	return vh*kle*uaf*(ea-0.611);
 }
 
 fn calc_condensation(le: f64) -> f64 {
