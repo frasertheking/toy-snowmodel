@@ -25,7 +25,7 @@
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 //
-// main.rs
+// General formulas retrieved from Dingman, 2015
 //
 
 extern crate gnuplot;
@@ -60,7 +60,7 @@ struct ModelRun {
 }
 
 // Saving helper function
-fn saveToDisk(temperatures: [f64; 50],
+fn save_to_disk(temperatures: [f64; 50],
 			  total_water_arr: [f64; 50],
 			  total_abl_arr: [f64; 50],
 			  total_melt_arr: [f64; 50],
@@ -99,23 +99,65 @@ fn run_model(air_temperature: f64, model_diog: bool) -> ModelRun {
 	let rain_rate: f64 = 0.0;               // mm/day
 	let atmospheric_pressure: f64 = 101.3;   // kPa
 
-    let net_solar_rad: f64 = calc_net_solar_rad(clear_sky_solar_rad, cloud_cover_fraction, forest_cover_fraction, albedo);
-    let vapor_pressure: f64 = calc_vap_pressure(air_temperature, relative_humidity);
-    let atmos_emissivity: f64 = calc_atmos_emissivity(forest_cover_fraction, vapor_pressure, cloud_cover_fraction);
-    let net_long_wave_rad: f64 = calc_net_long_rad(atmos_emissivity, air_temperature);
+    let net_solar_rad: f64 = calc_net_solar_rad(clear_sky_solar_rad, 
+    											cloud_cover_fraction, 
+    											forest_cover_fraction, 
+    											albedo);
+
+    let vapor_pressure: f64 = calc_vap_pressure(air_temperature, 
+    											relative_humidity);
+
+    let atmos_emissivity: f64 = calc_atmos_emissivity(forest_cover_fraction, 
+    												  vapor_pressure, 
+    												  cloud_cover_fraction);
+
+    let net_long_wave_rad: f64 = calc_net_long_rad(atmos_emissivity, 
+    											   air_temperature);
+
     let net_rad: f64 = net_solar_rad + net_long_wave_rad;
-    let adjusted_wind_speed: f64 = calc_adj_wind_speed(wind_speed, forest_cover_fraction);
-    let air_density: f64 = calc_air_density(atmospheric_pressure, air_temperature);
-    let richardson_num: f64 = calc_richardson_num(air_temperature, adjusted_wind_speed);
-    let stability_factor_m: f64 = calc_stability_factor_m(measurement_height, roughness_height);
-    let stability_factors_v_h: f64 = calc_stability_factors_v_h(richardson_num, stability_factor_m);
-    let sensible_heat_xfer_co: f64 = calc_sensible_heat_xfer_co(air_density, measurement_height, roughness_height);
-    let latent_heat_xfer_co: f64 = calc_latent_heat_xfer_co(air_density, atmospheric_pressure, measurement_height, roughness_height);
-    let sensible_xfer_rate: f64 = calc_sensible_heat_xfer_rate(stability_factors_v_h, sensible_heat_xfer_co, adjusted_wind_speed, air_temperature);
-    let latent_xfer_rate: f64 = calc_latent_heat_xfer_rate(stability_factors_v_h, latent_heat_xfer_co, adjusted_wind_speed, vapor_pressure);
+
+    let adjusted_wind_speed: f64 = calc_adj_wind_speed(wind_speed, 
+    												   forest_cover_fraction);
+
+    let air_density: f64 = calc_air_density(atmospheric_pressure, 
+    									    air_temperature);
+
+    let richardson_num: f64 = calc_richardson_num(air_temperature, 
+    											  adjusted_wind_speed);
+
+    let stability_factor_m: f64 = calc_stability_factor_m(measurement_height, 
+    													  roughness_height);
+
+    let stability_factors_v_h: f64 = calc_stability_factors_v_h(richardson_num, 
+    														    stability_factor_m);
+
+    let sensible_heat_xfer_co: f64 = calc_sensible_heat_xfer_co(air_density, 
+    															measurement_height, 
+    															roughness_height);
+
+    let latent_heat_xfer_co: f64 = calc_latent_heat_xfer_co(air_density, 
+    														atmospheric_pressure, 
+    														measurement_height, 
+    														roughness_height);
+
+    let sensible_xfer_rate: f64 = calc_sensible_heat_xfer_rate(stability_factors_v_h, 
+    														   sensible_heat_xfer_co, 
+    														   adjusted_wind_speed, 
+    														   air_temperature);
+
+    let latent_xfer_rate: f64 = calc_latent_heat_xfer_rate(stability_factors_v_h, 
+    													   latent_heat_xfer_co, 
+    													   adjusted_wind_speed, 
+    													   vapor_pressure);
+
     let condensation: f64 = calc_condensation(latent_xfer_rate);
+
     let rain_heat: f64 = calc_rain_heat(rain_rate, air_temperature);
-    let total_heat_input_rate: f64 = calc_total_heat_input_rate(net_rad, sensible_xfer_rate, latent_xfer_rate, rain_heat);
+
+    let total_heat_input_rate: f64 = calc_total_heat_input_rate(net_rad, 
+    															sensible_xfer_rate, 
+    															latent_xfer_rate, 
+    															rain_heat);
 
     // Energy Balance Approach
     let total_melt: f64 = calc_total_melt(total_heat_input_rate);
@@ -129,8 +171,10 @@ fn run_model(air_temperature: f64, model_diog: bool) -> ModelRun {
     if model_diog {
 	    // INPUT VARIABLES
 	    println!("\n\nINPUT:");
-	    println!("\nSite:\nMeasurement Height: {}\nRoughness Height: {}\nForest Cover: {}\nAlbedo: {}\nSnowpack Density: {}", measurement_height, roughness_height, forest_cover_fraction, albedo, snow_density);
-	    println!("\nWeather:\nClear Sky Solar Rad: {}\nCloud Fraction: {}\nAir Temp: {}\nRelative Humidity: {}\nWind Speed: {}\nRain Rate: {}\nAtmos Pressure: {}", clear_sky_solar_rad, cloud_cover_fraction, air_temperature, relative_humidity, wind_speed, rain_rate, atmospheric_pressure);
+	    println!("\nSite:\nMeasurement Height: {}\nRoughness Height: {}\nForest Cover: {}\nAlbedo: {}\nSnowpack Density: {}",
+	     measurement_height, roughness_height, forest_cover_fraction, albedo, snow_density);
+	    println!("\nWeather:\nClear Sky Solar Rad: {}\nCloud Fraction: {}\nAir Temp: {}\nRelative Humidity: {}\nWind Speed: {}\nRain Rate: {}\nAtmos Pressure: {}",
+	     clear_sky_solar_rad, cloud_cover_fraction, air_temperature, relative_humidity, wind_speed, rain_rate, atmospheric_pressure);
 
 	    // OUTPUT VARIABLES
 	    println!("\n\nOUTPUT:");
@@ -219,10 +263,21 @@ fn calc_ti_total_water_output(ti_total_melt: f64, r: f64) -> f64 {
 // ENERGY BALANCE HELPER FNS:
 
 fn calc_net_solar_rad(kcs: f64, c: f64, f: f64, a: f64) -> f64 {
+	// Energy-Exchange Processes
+
+	// Shortwave (Solar Radiation)
+	// K = K_incident - K_refl = K_incident * (1 - albedo) 
+
+	// Cloud cover (empircal values from Croley 1989)
+	// Tau_c = 0.355 + 0.68 * (1 - c)
+
+	// Forest cover insulation (value for lodge-pole pine Mahat and Tarborton 2012)
+	// Tau_f = exp(-3.91 * F)
 	return kcs*(0.355 + 0.68*(1.0-c))*(-3.91*f).exp()*(1.0-a);
 }
 
 fn calc_vap_pressure(ta: f64, wa: f64) -> f64 {
+	// Saturation vapor pressure
 	return 0.611*(17.3*ta/(ta+237.3)).exp()*wa;
 }
 
@@ -243,6 +298,8 @@ fn calc_air_density(p: f64, ta: f64) -> f64 {
 }
 
 fn calc_richardson_num(ta: f64, va: f64) -> f64 {
+	// Stability state of the atmosphere 
+
 	return (f64::powf(2.0, 2.0)*9.81*ta)/(0.5*(ta+2.0*273.2)*f64::powf(va, 2.0));
 }
 
@@ -293,6 +350,7 @@ fn calc_total_heat_input_rate(net_rad: f64, h: f64, le: f64, r: f64) -> f64 {
 fn main() {
 
 	// Model Run
+	// This example is running over 50 temperatures 0 -> 50 degrees C
 	let mut total_water_arr: [f64; 50] = [-1.0; 50];
 	let mut total_abl_arr: [f64; 50] = [-1.0; 50];
 	let mut total_melt_arr: [f64; 50] = [-1.0; 50];
@@ -308,7 +366,7 @@ fn main() {
 		ti_total_melt_arr[x] = run_model(x as f64, false).ti_total_water_output;
 	}
 
-	saveToDisk(temperatures, total_water_arr, total_abl_arr, total_melt_arr, ti_total_abl_arr, ti_total_melt_arr);
+	save_to_disk(temperatures, total_water_arr, total_abl_arr, total_melt_arr, ti_total_abl_arr, ti_total_melt_arr);
 }
 
 
