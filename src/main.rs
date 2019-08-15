@@ -7,7 +7,7 @@
 //////       a physical-based approach and temperature        //////
 //////       index approach.                                  //////
 //////                                                        //////
-//////       This is a rust script: rust is freely 			  //////
+//////       This is a rust script: rust is freely            //////
 //////       available from https://www.rust-lang.org.        //////
 //////       To run the script, cd into the debug             //////
 //////       directory of this project and type               //////
@@ -84,6 +84,10 @@ fn run_model(air_temperature: f64, model_diog: bool) -> ModelRun {
     	println!("---Simple Snow Melt Model---");
     }
 
+    ///////////////////////////////////////
+    //// Variable initialization
+    //// Feel free to play with these values
+
 	// Site variables
 	let measurement_height: f64 = 5.0;       // meters
 	let roughness_height: f64 = 0.0015;      // meters
@@ -100,64 +104,46 @@ fn run_model(air_temperature: f64, model_diog: bool) -> ModelRun {
 	let atmospheric_pressure: f64 = 101.3;   // kPa
 
     let net_solar_rad: f64 = calc_net_solar_rad(clear_sky_solar_rad, 
-    											cloud_cover_fraction, 
-    											forest_cover_fraction, 
-    											albedo);
+    	cloud_cover_fraction, forest_cover_fraction, albedo);
 
-    let vapor_pressure: f64 = calc_vap_pressure(air_temperature, 
-    											relative_humidity);
+    let vapor_pressure: f64 = calc_vap_pressure(air_temperature, relative_humidity);
 
     let atmos_emissivity: f64 = calc_atmos_emissivity(forest_cover_fraction, 
-    												  vapor_pressure, 
-    												  cloud_cover_fraction);
+    	vapor_pressure, 
+    	cloud_cover_fraction);
 
-    let net_long_wave_rad: f64 = calc_net_long_rad(atmos_emissivity, 
-    											   air_temperature);
+    let net_long_wave_rad: f64 = calc_net_long_rad(atmos_emissivity, air_temperature);
 
     let net_rad: f64 = net_solar_rad + net_long_wave_rad;
 
-    let adjusted_wind_speed: f64 = calc_adj_wind_speed(wind_speed, 
-    												   forest_cover_fraction);
+    let adjusted_wind_speed: f64 = calc_adj_wind_speed(wind_speed, forest_cover_fraction);
 
-    let air_density: f64 = calc_air_density(atmospheric_pressure, 
-    									    air_temperature);
+    let air_density: f64 = calc_air_density(atmospheric_pressure, air_temperature);
 
-    let richardson_num: f64 = calc_richardson_num(air_temperature, 
-    											  adjusted_wind_speed);
+    let richardson_num: f64 = calc_richardson_num(air_temperature, adjusted_wind_speed);
 
-    let stability_factor_m: f64 = calc_stability_factor_m(measurement_height, 
-    													  roughness_height);
+    let stability_factor_m: f64 = calc_stability_factor_m(measurement_height, roughness_height);
 
-    let stability_factors_v_h: f64 = calc_stability_factors_v_h(richardson_num, 
-    														    stability_factor_m);
+    let stability_factors_v_h: f64 = calc_stability_factors_v_h(richardson_num, stability_factor_m);
 
     let sensible_heat_xfer_co: f64 = calc_sensible_heat_xfer_co(air_density, 
-    															measurement_height, 
-    															roughness_height);
+    	measurement_height, roughness_height);
 
     let latent_heat_xfer_co: f64 = calc_latent_heat_xfer_co(air_density, 
-    														atmospheric_pressure, 
-    														measurement_height, 
-    														roughness_height);
+    	atmospheric_pressure, measurement_height, roughness_height);
 
-    let sensible_xfer_rate: f64 = calc_sensible_heat_xfer_rate(stability_factors_v_h, 
-    														   sensible_heat_xfer_co, 
-    														   adjusted_wind_speed, 
-    														   air_temperature);
+    let sensible_xfer_rate: f64 = calc_sensible_heat_xfer_rate(stability_factors_v_h,
+    	sensible_heat_xfer_co, adjusted_wind_speed, air_temperature);
 
     let latent_xfer_rate: f64 = calc_latent_heat_xfer_rate(stability_factors_v_h, 
-    													   latent_heat_xfer_co, 
-    													   adjusted_wind_speed, 
-    													   vapor_pressure);
+    	latent_heat_xfer_co, adjusted_wind_speed, vapor_pressure);
 
     let condensation: f64 = calc_condensation(latent_xfer_rate);
 
     let rain_heat: f64 = calc_rain_heat(rain_rate, air_temperature);
 
     let total_heat_input_rate: f64 = calc_total_heat_input_rate(net_rad, 
-    															sensible_xfer_rate, 
-    															latent_xfer_rate, 
-    															rain_heat);
+    	sensible_xfer_rate, latent_xfer_rate, rain_heat);
 
     // Energy Balance Approach
     let total_melt: f64 = calc_total_melt(total_heat_input_rate);
@@ -171,15 +157,20 @@ fn run_model(air_temperature: f64, model_diog: bool) -> ModelRun {
     if model_diog {
 	    // INPUT VARIABLES
 	    println!("\n\nINPUT:");
-	    println!("\nSite:\nMeasurement Height: {}\nRoughness Height: {}\nForest Cover: {}\nAlbedo: {}\nSnowpack Density: {}",
+	    println!("\nSite:\nMeasurement Height: {}\nRoughness Height: 
+	    	     {}\nForest Cover: {}\nAlbedo: {}\nSnowpack Density: {}",
 	     measurement_height, roughness_height, forest_cover_fraction, albedo, snow_density);
-	    println!("\nWeather:\nClear Sky Solar Rad: {}\nCloud Fraction: {}\nAir Temp: {}\nRelative Humidity: {}\nWind Speed: {}\nRain Rate: {}\nAtmos Pressure: {}",
-	     clear_sky_solar_rad, cloud_cover_fraction, air_temperature, relative_humidity, wind_speed, rain_rate, atmospheric_pressure);
+	    println!("\nWeather:\nClear Sky Solar Rad: {}\nCloud Fraction: {}\nAir Temp: 
+	    	{}\nRelative Humidity: {}\nWind Speed: {}\nRain Rate: {}\nAtmos Pressure: {}",
+	     clear_sky_solar_rad, cloud_cover_fraction, air_temperature, relative_humidity,
+	     wind_speed, rain_rate, atmospheric_pressure);
 
 	    // OUTPUT VARIABLES
 	    println!("\n\nOUTPUT:");
-	    println!("\nEnergy Balance Approach: \nTotal Melt: {} \nTotal Ablation: {} \nTotal Water Output: {}", total_melt, total_ablation, total_water_output);
-	    println!("\nTemperature Index Approach: \nTotal Melt: {} \nTotal Water Output: {}", ti_total_melt, ti_total_water_output);
+	    println!("\nEnergy Balance Approach: \nTotal Melt: {} \nTotal Ablation: 
+	    	{} \nTotal Water Output: {}", total_melt, total_ablation, total_water_output);
+	    println!("\nTemperature Index Approach: \nTotal Melt: {} \nTotal Water Output: {}",
+	     ti_total_melt, ti_total_water_output);
 	    println!("\n\n---Complete---");
 	}
 
