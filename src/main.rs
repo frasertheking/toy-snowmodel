@@ -76,30 +76,41 @@ struct ModelRun {
     ti_total_water_output: f64,
 }
 
-
+// Main runloop
 fn main() {
 
-	run_model(4.0, true);
+	// Model Run
+	let mut total_water_arr: [f64; 50] = [-1.0; 50];
+	let mut total_abl_arr: [f64; 50] = [-1.0; 50];
+	let mut total_melt_arr: [f64; 50] = [-1.0; 50];
+	let mut ti_total_abl_arr: [f64; 50] = [-1.0; 50];
+	let mut ti_total_melt_arr: [f64; 50] = [-1.0; 50];
+	let mut temperatures: [f64; 50] = [-1.0; 50];
+	for x in (0..50).rev() {
+		temperatures[x] = x as f64;
+		total_water_arr[x] = run_model(x as f64, false).total_water_output;
+		total_abl_arr[x] = run_model(x as f64, false).total_ablation;
+		total_melt_arr[x] = run_model(x as f64, false).total_melt;
+		ti_total_abl_arr[x] = run_model(x as f64, false).ti_total_melt;
+		ti_total_melt_arr[x] = run_model(x as f64, false).ti_total_water_output;
+	}
 
- //    let mut outputs: [f64; 50] = [-1.0; 50];
- //    let mut outputs2: [f64; 50] = [-1.0; 50];
- //    let mut outputs3: [f64; 50] = [-1.0; 50];
- //    let mut temps: [f64; 50] = [-1.0; 50];
- //    for x in (0..50).rev() {
- //    	temps[x] = x as f64;
- //    	outputs[x] = run_model(x as f64, false).total_water_output;
- //    	outputs2[x] = run_model(x as f64, false).total_ablation;
- //    	outputs3[x] = run_model(x as f64, false).total_melt;
-	// }
-
-	// example(outputs, outputs2, outputs3);
+	saveToDisk(temperatures, total_water_arr, total_abl_arr, total_melt_arr, ti_total_abl_arr, ti_total_melt_arr);
 }
 
-fn example(arr1: [f64; 50], arr2: [f64; 50], arr3: [f64; 50]) -> Result<(), Box<Error>> {
-    let mut wtr = Writer::from_path("foo.csv")?;
-    wtr.serialize(&arr1[0 .. 50])?;
-    wtr.serialize(&arr2[0 .. 50])?;
-    wtr.serialize(&arr3[0 .. 50])?;
+fn saveToDisk(temperatures: [f64; 50],
+			  total_water_arr: [f64; 50],
+			  total_abl_arr: [f64; 50],
+			  total_melt_arr: [f64; 50],
+			  ti_total_abl_arr: [f64; 50],
+			  ti_total_melt_arr: [f64; 50]) -> Result<(), Box<Error>> {
+    let mut wtr = Writer::from_path("model_output.csv")?;
+    wtr.serialize(&temperatures[0 .. 50])?;
+    wtr.serialize(&total_water_arr[0 .. 50])?;
+    wtr.serialize(&total_abl_arr[0 .. 50])?;
+    wtr.serialize(&total_melt_arr[0 .. 50])?;
+    wtr.serialize(&ti_total_abl_arr[0 .. 50])?;
+    wtr.serialize(&ti_total_melt_arr[0 .. 50])?;
     wtr.flush()?;
     Ok(())
 }
