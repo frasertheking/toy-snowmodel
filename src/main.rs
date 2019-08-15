@@ -1,5 +1,5 @@
 
-///////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 //////                                                        //////
@@ -100,7 +100,7 @@ fn run_model(air_temperature: f64, model_diog: bool) -> ModelRun {
 	let cloud_cover_fraction: f64 = 0.5;
 	let relative_humidity: f64 = 0.8;        // Wa
 	let wind_speed: f64 = 6.0;               // m/s
-	let rain_rate: f64 = 0.0;               // mm/day
+	let rain_rate: f64 = 0.0;                // mm/day
 	let atmospheric_pressure: f64 = 101.3;   // kPa
 
     let net_solar_rad: f64 = calc_net_solar_rad(clear_sky_solar_rad, 
